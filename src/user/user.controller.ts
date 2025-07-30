@@ -17,8 +17,10 @@ import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Public } from '../auth/decorators/public.decorator';
 
 @Controller('users')
+@UseGuards(JwtAuthGuard) // Aplica JWT guard a todo o controlador
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
@@ -26,6 +28,7 @@ export class UserController {
    * Registro público de usuários
    * POST /users/register
    */
+  @Public() // Rota pública - não requer autenticação
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
   async register(@Body() createUserDto: CreateUserDto) {
@@ -40,7 +43,6 @@ export class UserController {
    * Criar usuário (rota protegida para admins)
    * POST /users
    */
-  @UseGuards(JwtAuthGuard)
   @Post()
   @HttpCode(HttpStatus.CREATED)
   async create(@Body() createUserDto: CreateUserDto) {
@@ -55,15 +57,15 @@ export class UserController {
    * Listar todos os usuários
    * GET /users
    */
-  @UseGuards(JwtAuthGuard)
   @Get()
   async findAll(@Query('active') active?: string) {
     const users = await this.userService.findAll();
     
     // Filtrar por status ativo se especificado
-    const filteredUsers = active !== undefined 
-      ? users.filter(user => user.isActive === (active === 'true'))
-      : users;
+    const filteredUsers =
+      active !== undefined
+        ? users.filter((user) => user.isActive === (active === 'true'))
+        : users;
 
     return {
       success: true,
@@ -77,7 +79,6 @@ export class UserController {
    * Buscar usuário por ID
    * GET /users/:id
    */
-  @UseGuards(JwtAuthGuard)
   @Get(':id')
   async findOne(@Param('id', ParseIntPipe) id: number) {
     return {
@@ -91,11 +92,10 @@ export class UserController {
    * Atualizar usuário (PATCH - atualização parcial)
    * PATCH /users/:id
    */
-  @UseGuards(JwtAuthGuard)
   @Patch(':id')
   async update(
-    @Param('id', ParseIntPipe) id: number, 
-    @Body() updateUserDto: UpdateUserDto
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateUserDto: UpdateUserDto,
   ) {
     return {
       success: true,
@@ -108,11 +108,10 @@ export class UserController {
    * Atualizar usuário completamente (PUT - substituição completa)
    * PUT /users/:id
    */
-  @UseGuards(JwtAuthGuard)
   @Put(':id')
   async replace(
-    @Param('id', ParseIntPipe) id: number, 
-    @Body() createUserDto: CreateUserDto
+    @Param('id', ParseIntPipe) id: number,
+    @Body() createUserDto: CreateUserDto,
   ) {
     // Para PUT, primeiro verificamos se o usuário existe
     await this.userService.findOne(id);
@@ -131,7 +130,6 @@ export class UserController {
    * Desativar usuário (soft delete)
    * DELETE /users/:id
    */
-  @UseGuards(JwtAuthGuard)
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
   async remove(@Param('id', ParseIntPipe) id: number) {
@@ -146,7 +144,6 @@ export class UserController {
    * Deletar usuário permanentemente
    * DELETE /users/:id/permanent
    */
-  @UseGuards(JwtAuthGuard)
   @Delete(':id/permanent')
   @HttpCode(HttpStatus.OK)
   async hardDelete(@Param('id', ParseIntPipe) id: number) {

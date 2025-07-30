@@ -9,14 +9,17 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 @Module({
   imports: [
     UserModule,
-    PassportModule,
+    PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'sua_chave_secreta_aqui_muito_forte_123456789',
-      signOptions: { expiresIn: process.env.JWT_EXPIRES_IN || '24h' },
+      signOptions: { 
+        expiresIn: process.env.JWT_EXPIRES_IN || '24h',
+        algorithm: 'HS256', // Especifica algoritmo para segurança
+      },
     }),
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],
-  exports: [AuthService],
+  exports: [AuthService, JwtStrategy, PassportModule],
 })
 export class AuthModule {}
